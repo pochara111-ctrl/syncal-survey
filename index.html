@@ -1,187 +1,365 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Syncal AI - Academic Survey & Analytics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Syncal AI — Academic Survey & Analytics</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
+    * { -webkit-tap-highlight-color: transparent; }
     body {
       font-family: 'Plus Jakarta Sans', 'Prompt', sans-serif;
-      background-color: #F8FAFD;
+      background-color: #F8FAFC;
+      overflow-x: hidden;
     }
-    .custom-radio:checked + label {
-      border-color: #1A73E8;
-      background-color: #F1F6FE;
-      color: #1A73E8;
+
+    /* Animated Aurora Background Blobs */
+    .blob-bg {
+      position: fixed;
+      width: 450px;
+      height: 450px;
+      border-radius: 50%;
+      filter: blur(85px);
+      opacity: 0.32;
+      z-index: -1;
+      animation: floatBlob 14s infinite alternate ease-in-out;
+      pointer-events: none;
     }
-    .custom-checkbox:checked + label {
-      border-color: #1A73E8;
-      background-color: #F1F6FE;
-      color: #1A73E8;
+    .blob-1 { top: -120px; left: -120px; background: #60A5FA; }
+    .blob-2 { bottom: -120px; right: -120px; background: #C084FC; animation-delay: -7s; }
+
+    @keyframes floatBlob {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(50px, 35px) scale(1.12); }
     }
-    .fade-in {
-      animation: fadeIn 0.4s ease-in-out;
+
+    /* Responsive Selection Cards */
+    .option-input:checked + .option-card {
+      border-color: #2563EB;
+      background: linear-gradient(135deg, #EFF6FF 0%, #F5F3FF 100%);
+      color: #1E40AF;
+      box-shadow: 0 8px 20px -6px rgba(37, 99, 235, 0.22);
+      transform: translateY(-2px);
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
+    .option-input:checked + .option-card .check-circle {
+      background-color: #2563EB;
+      border-color: #2563EB;
+      transform: scale(1.05);
+    }
+    .option-input:checked + .option-card .check-icon {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Stagger Entrance */
+    .q-card {
+      opacity: 0;
+      transform: translateY(14px);
+      animation: slideUpFade 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes slideUpFade {
       to { opacity: 1; transform: translateY(0); }
+    }
+
+    .bar-fill { transition: width 1s cubic-bezier(0.22, 1, 0.36, 1); }
+
+    /* Shimmer Button */
+    .btn-shimmer { position: relative; overflow: hidden; }
+    .btn-shimmer::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -60%; width: 40%; height: 200%;
+      background: rgba(255, 255, 255, 0.25);
+      transform: rotate(30deg);
+      transition: all 0.6s ease;
+    }
+    .btn-shimmer:hover::after { left: 120%; }
+
+    /* Custom Success Modal Animations */
+    .modal-spring {
+      animation: modalPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    @keyframes modalPop {
+      0% { opacity: 0; transform: scale(0.85) translateY(20px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .svg-check-circle {
+      stroke-dasharray: 166; stroke-dashoffset: 166;
+      animation: strokeCircle 0.6s cubic-bezier(0.65, 0, 0.45, 1) 0.15s forwards;
+    }
+    .svg-check-path {
+      stroke-dasharray: 48; stroke-dashoffset: 48;
+      animation: strokePath 0.4s cubic-bezier(0.65, 0, 0.45, 1) 0.55s forwards;
+    }
+    @keyframes strokeCircle { 100% { stroke-dashoffset: 0; } }
+    @keyframes strokePath { 100% { stroke-dashoffset: 0; } }
+
+    /* Floating Toast */
+    .toast-enter {
+      animation: toastSlideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    @keyframes toastSlideIn {
+      from { opacity: 0; transform: translateY(-16px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
   </style>
 </head>
-<body class="text-slate-800 antialiased min-h-screen py-8 px-4 flex flex-col items-center justify-between">
+<body class="text-slate-800 antialiased min-h-screen flex flex-col items-center justify-between pt-4 pb-6 px-3 sm:px-6 relative">
+
+  <div class="blob-bg blob-1"></div>
+  <div class="blob-bg blob-2"></div>
+
+  <!-- Top Sticky Progress Bar -->
+  <div class="fixed top-0 left-0 w-full h-1.5 bg-slate-200/70 backdrop-blur-sm z-50">
+    <div id="topProgressBar" class="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 transition-all duration-300 w-0"></div>
+  </div>
+
+  <!-- Custom Floating Toast Container -->
+  <div id="customToastContainer" class="fixed top-4 right-4 left-4 sm:left-auto z-50 flex flex-col items-end gap-2 pointer-events-none"></div>
+
+  <!-- Fullscreen Loading Overlay -->
+  <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden flex-col items-center justify-center text-white p-4 text-center">
+    <div class="relative w-24 h-24 flex items-center justify-center">
+      <div class="absolute inset-0 rounded-full border-4 border-blue-400/30 animate-ping"></div>
+      <div class="w-16 h-16 rounded-full border-4 border-t-white border-r-indigo-400 border-b-transparent border-l-transparent animate-spin"></div>
+      <span class="absolute text-2xl">✨</span>
+    </div>
+    <p id="loadingOverlayText" class="mt-4 text-sm font-semibold tracking-wide animate-pulse">กำลังซิงค์ข้อมูลเข้าสู่ระบบ...</p>
+  </div>
+
+  <!-- ==================== CUSTOM SUCCESS MODAL ==================== -->
+  <div id="customSuccessModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-md">
+    <div class="modal-spring relative w-full max-w-md bg-white rounded-[2.25rem] p-7 sm:p-8 text-center shadow-2xl border border-slate-100 overflow-hidden">
+      <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-48 bg-gradient-to-br from-emerald-400/30 via-blue-500/25 to-purple-500/20 blur-2xl rounded-full pointer-events-none"></div>
+
+      <div class="relative mx-auto w-24 h-24 flex items-center justify-center mb-5">
+        <div class="absolute inset-0 rounded-full bg-emerald-500/15 animate-ping" style="animation-duration: 2s;"></div>
+        <div class="relative w-20 h-20 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+          <svg class="w-11 h-11 text-white" viewBox="0 0 52 52" fill="none">
+            <circle class="svg-check-circle" cx="26" cy="26" r="24" stroke="rgba(255,255,255,0.35)" stroke-width="3" fill="none"/>
+            <path class="svg-check-path" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" d="M15 27l7 7 15-15"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-[11px] font-bold uppercase tracking-wider mb-3">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>Cloud Synced • Verified</span>
+      </div>
+
+      <h3 id="modalSuccessTitle" class="text-2xl font-extrabold text-slate-800 tracking-tight">บันทึกข้อมูลสำเร็จ!</h3>
+      <p id="modalSuccessMsg" class="text-xs sm:text-sm text-slate-500 mt-2.5 leading-relaxed px-1">
+        ขอบคุณที่ร่วมเป็นส่วนหนึ่งในการพัฒนาโครงงาน Syncal AI ข้อมูลของคุณถูกส่งเข้าสู่ฐานข้อมูลเรียบร้อยแล้ว
+      </p>
+
+      <div class="mt-5 p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs text-slate-600">
+        <span class="font-medium">สถานะการส่ง (Status)</span>
+        <span class="font-bold text-blue-600 flex items-center gap-1">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+          100% Completed
+        </span>
+      </div>
+
+      <button type="button" onclick="closeSuccessModal()" class="btn-shimmer mt-6 w-full py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 active:scale-[0.98] text-white font-bold rounded-2xl shadow-xl shadow-indigo-500/25 transition flex items-center justify-center gap-2 text-sm">
+        <span id="modalAnotherBtn">ทำแบบสอบถามอีกครั้ง</span>
+        <span>→</span>
+      </button>
+    </div>
+  </div>
 
   <!-- ==================== 1. SURVEY VIEW ==================== -->
-  <div id="surveyView" class="w-full max-w-2xl bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden relative fade-in">
+  <div id="surveyView" class="w-full max-w-2xl bg-white/90 backdrop-blur-xl rounded-[1.75rem] sm:rounded-[2rem] shadow-2xl shadow-slate-300/50 border border-white overflow-hidden my-2 sm:my-4">
     
-    <!-- Header Banner -->
-    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-8 text-white relative">
-      <div class="absolute top-6 right-6">
-        <button type="button" onclick="toggleLang()" class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition border border-white/25 flex items-center gap-1.5 shadow-sm">
-          <span class="text-base">🌐</span>
-          <span id="langLabel">Switch to English</span>
+    <!-- Hero Header Banner -->
+    <div class="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 p-6 sm:p-10 text-white relative overflow-hidden">
+      <div class="absolute -right-12 -bottom-12 w-48 h-48 border-[24px] border-white/10 rounded-full pointer-events-none"></div>
+      
+      <div class="flex items-center justify-between gap-2 mb-4 relative z-10">
+        <!-- Secret Trigger: Click 3 times to open Admin Login -->
+        <div onclick="secretTrigger()" class="inline-flex items-center gap-1.5 bg-white/15 hover:bg-white/25 backdrop-blur-md px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold cursor-pointer select-none active:scale-95 transition border border-white/20">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>MFU × True × Google | Track 1</span>
+        </div>
+
+        <!-- Language Switcher -->
+        <button type="button" onclick="toggleLang()" class="bg-white/15 hover:bg-white/25 active:scale-95 backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition border border-white/25 flex items-center gap-1.5 shadow-sm">
+          <span>🌐</span>
+          <span id="langLabel">English</span>
         </button>
       </div>
 
-      <div onclick="secretTrigger()" class="inline-block bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium mb-3 cursor-pointer select-none">
-        MFU × True × Google | Track 1
-      </div>
-      <h1 class="text-2xl md:text-3xl font-bold tracking-tight" id="formTitle">
-        Academic Schedule & Syncal AI Survey
+      <h1 class="text-xl sm:text-3xl font-extrabold tracking-tight leading-snug relative z-10" id="formTitle">
+        แบบสอบถามการจัดการตารางเรียน & Syncal AI
       </h1>
-      <p class="text-blue-100 text-sm mt-3 leading-relaxed" id="formDesc">
-        This survey studies challenges regarding fragmented academic schedules across platforms (REG, MFU Life, LMS, Syllabus) to support the Syncal AI project.
+      <p class="text-blue-100 text-xs sm:text-sm mt-2.5 leading-relaxed relative z-10" id="formDesc">
+        ศึกษาปัญหาข้อมูลกำหนดการเรียนที่กระจัดกระจายอยู่คนละระบบ (REG, MFU Life, LMS, Syllabus) เพื่อพัฒนาโครงงาน Syncal AI
       </p>
+
+      <div class="mt-5 inline-flex items-center gap-2 bg-slate-900/30 backdrop-blur-md px-3.5 py-1.5 rounded-xl text-xs text-blue-100 border border-white/10">
+        <span id="progressText">ความคืบหน้า: 0/9 ข้อหลัก</span>
+      </div>
     </div>
 
-    <!-- Form Container -->
-    <form id="surveyForm" onsubmit="handleSubmit(event)" class="p-6 md:p-8 space-y-8">
-      <div class="space-y-3 fade-in">
-        <label class="block text-sm font-semibold text-slate-800" id="q1_title"></label>
-        <div class="grid grid-cols-2 gap-2.5 text-sm" id="q1_options"></div>
-      </div>
-      <div class="space-y-3 fade-in">
-        <label class="block text-sm font-semibold text-slate-800" id="q2_title"></label>
-        <div class="grid grid-cols-2 gap-2.5 text-sm" id="q2_options"></div>
-      </div>
-      <div class="space-y-3 fade-in">
-        <label class="block text-sm font-semibold text-slate-800" id="q3_title"></label>
-        <div class="grid grid-cols-3 gap-2.5 text-sm" id="q3_options"></div>
-      </div>
-      <div class="space-y-3 fade-in">
-        <label class="block text-sm font-semibold text-slate-800" id="q4_title"></label>
-        <div class="space-y-2 text-sm" id="q4_options"></div>
-      </div>
-      <div class="space-y-3 fade-in">
-        <label class="block text-sm font-semibold text-slate-800" id="q5_title"></label>
-        <div class="grid grid-cols-2 gap-2.5 text-sm" id="q5_options"></div>
-      </div>
-      <div class="space-y-3 fade-in">
-        <label class="block text-sm font-semibold text-slate-800" id="q6_title"></label>
-        <div class="space-y-2 text-sm" id="q6_options"></div>
-      </div>
-      <div class="space-y-3 fade-in">
-        <label class="block text-sm font-semibold text-slate-800" id="q7_title"></label>
-        <div class="space-y-2 text-sm" id="q7_options"></div>
-      </div>
-      <div class="space-y-3 fade-in">
-        <label class="block text-sm font-semibold text-slate-800" id="q8_title"></label>
-        <div class="space-y-2 text-sm" id="q8_options"></div>
-      </div>
-      <div class="space-y-3 fade-in">
-        <label class="block text-sm font-semibold text-slate-800" id="q9_title"></label>
-        <div class="grid grid-cols-2 gap-2.5 text-sm" id="q9_options"></div>
-      </div>
-      <div class="space-y-3 fade-in">
-        <label class="block text-sm font-semibold text-slate-800" id="q10_title"></label>
-        <textarea id="q10" name="q10" rows="3" class="w-full p-3.5 border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition text-sm text-slate-700 resize-none" placeholder="Share your feedback or desired features..."></textarea>
+    <!-- Survey Form -->
+    <form id="surveyForm" onsubmit="handleSubmit(event)" onchange="updateFormProgress()" class="p-5 sm:p-9 space-y-7 sm:space-y-8">
+      <div id="questionsContainer" class="space-y-7 sm:space-y-8"></div>
+
+      <!-- Q10 Open-ended -->
+      <div class="q-card space-y-3 p-4 sm:p-5 rounded-2xl bg-slate-50/70 border border-slate-100" style="animation-delay: 0.45s;">
+        <label class="block text-sm font-bold text-slate-800" id="q10_title"></label>
+        <textarea id="q10" rows="3" class="w-full p-3.5 sm:p-4 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition text-sm text-slate-700 resize-none"></textarea>
       </div>
 
-      <div class="pt-4">
-        <button type="submit" id="submitBtn" class="w-full py-4 bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-semibold rounded-2xl shadow-lg shadow-blue-500/25 transition duration-150 flex items-center justify-center gap-2">
-          <span id="submitLabel">Submit Response</span>
+      <div class="pt-2">
+        <button type="submit" id="submitBtn" class="btn-shimmer w-full py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 active:scale-[0.98] text-white font-bold rounded-2xl shadow-xl shadow-blue-600/25 transition duration-200 flex items-center justify-center gap-2.5 text-sm sm:text-base">
+          <span>🚀</span>
+          <span id="submitLabel">ส่งแบบสอบถาม (Submit Response)</span>
         </button>
       </div>
     </form>
   </div>
 
-  <!-- ==================== 2. ADMIN DASHBOARD VIEW (ENGLISH) ==================== -->
-  <div id="adminView" class="w-full max-w-6xl hidden fade-in space-y-6 my-4">
-    <div class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+  <!-- ==================== 2. HIDDEN ADMIN DASHBOARD VIEW ==================== -->
+  <div id="adminView" class="w-full max-w-6xl hidden space-y-6 my-4">
+    <div class="bg-slate-900 text-white p-5 sm:p-7 rounded-[1.75rem] sm:rounded-[2rem] shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 border border-slate-800">
       <div>
-        <div class="flex items-center gap-2 text-blue-400 text-xs font-semibold uppercase tracking-wider">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-          Live Empirical Data & Analytics
+        <div class="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+          Live Empirical Insights & Analytics
         </div>
-        <h2 class="text-2xl font-bold mt-1">Syncal AI — Executive Proposal Dashboard</h2>
-        <p class="text-slate-400 text-xs mt-0.5">Real-time empirical insights and percentage statistics for proposal & VDO pitch references.</p>
+        <h2 class="text-xl sm:text-2xl font-extrabold mt-1">Syncal AI — Executive Proposal Dashboard</h2>
+        <p class="text-slate-400 text-xs mt-1">สรุปข้อมูลเชิงประจักษ์และสัดส่วนเปอร์เซ็นต์แบบเรียลไทม์ สำหรับอ้างอิงใน Proposal และ VDO Pitch</p>
       </div>
-      <div class="flex flex-wrap items-center gap-2.5">
-        <button onclick="refreshAdminData()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-medium transition border border-slate-700">🔄 Refresh</button>
-        <button onclick="exportCSV()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-medium transition shadow-lg">📥 Download CSV</button>
-        <a id="sheetLinkBtn" href="#" target="_blank" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-medium transition">📊 Open Google Sheet</a>
-        <button onclick="closeAdmin()" class="px-4 py-2.5 bg-rose-500/20 text-rose-300 rounded-xl text-xs font-medium border border-rose-500/30">✕ Close Admin</button>
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="refreshAdminData()" class="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 border border-slate-700">
+          🔄 รีเฟรช
+        </button>
+        <button onclick="exportCSV()" class="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/25">
+          📥 โหลด CSV
+        </button>
+        <a id="sheetLinkBtn" href="#" target="_blank" class="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-lg shadow-blue-600/25">
+          📊 เปิด Google Sheet
+        </a>
+        <button onclick="closeAdmin()" class="px-3.5 py-2.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded-xl text-xs font-semibold transition border border-rose-500/30">
+          ✕ ปิดหน้าผู้ดูแล
+        </button>
       </div>
     </div>
 
-    <!-- KPI Cards -->
+    <!-- 4 KPI Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm"><div class="text-xs font-medium text-slate-400">Total Responses</div><div class="text-3xl font-bold text-slate-800 mt-2" id="kpiTotal">0</div></div>
-      <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm"><div class="text-xs font-medium text-slate-400">Ever Missed Deadlines (Q5)</div><div class="text-3xl font-bold text-rose-600 mt-2" id="kpiMissed">0%</div></div>
-      <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm"><div class="text-xs font-medium text-slate-400">Workload Stress (Q8)</div><div class="text-3xl font-bold text-amber-500 mt-2" id="kpiStress">0%</div></div>
-      <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm"><div class="text-xs font-medium text-slate-400">Want Syncal AI (Q9)</div><div class="text-3xl font-bold text-blue-600 mt-2" id="kpiAdopt">0%</div></div>
+      <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/40">
+        <div class="text-xs font-bold text-slate-400 uppercase">ผู้ตอบแบบสอบถามทั้งหมด</div>
+        <div class="text-3xl sm:text-4xl font-extrabold text-slate-800 mt-2" id="kpiTotal">0</div>
+        <div class="text-xs text-emerald-600 font-semibold mt-1.5">✓ ข้อมูลพร้อมใช้อ้างอิง</div>
+      </div>
+      <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/40">
+        <div class="text-xs font-bold text-slate-400 uppercase">เคยลืมส่งงาน / ห้องสอบ (ข้อ 5)</div>
+        <div class="text-3xl sm:text-4xl font-extrabold text-rose-600 mt-2" id="kpiMissed">0%</div>
+        <div class="text-xs text-slate-500 mt-1.5" id="kpiMissedSub">จากปัญหาข้อมูลกระจัดกระจาย</div>
+      </div>
+      <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/40">
+        <div class="text-xs font-bold text-slate-400 uppercase">เครียดจากงานสุมช่วงสอบ (ข้อ 8)</div>
+        <div class="text-3xl sm:text-4xl font-extrabold text-amber-500 mt-2" id="kpiStress">0%</div>
+        <div class="text-xs text-slate-500 mt-1.5" id="kpiStressSub">เผชิญปัญหา Workload Clustering</div>
+      </div>
+      <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/40">
+        <div class="text-xs font-bold text-slate-400 uppercase">ต้องการใช้ Syncal AI (ข้อ 9)</div>
+        <div class="text-3xl sm:text-4xl font-extrabold text-blue-600 mt-2" id="kpiAdopt">0%</div>
+        <div class="text-xs text-slate-500 mt-1.5" id="kpiAdoptSub">สนใจซิงค์ตารางเข้าปฏิทินในคลิกเดียว</div>
+      </div>
     </div>
 
     <!-- Charts -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm"><h3 class="text-sm font-bold text-slate-800 mb-3">Scattered Sources (Q4)</h3><div class="relative h-56"><canvas id="chartQ4"></canvas></div></div>
-      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm"><h3 class="text-sm font-bold text-slate-800 mb-3">Workload Stress (Q8)</h3><div class="relative h-56"><canvas id="chartQ8"></canvas></div></div>
-      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm"><h3 class="text-sm font-bold text-slate-800 mb-3">AI Adoption (Q9)</h3><div class="relative h-56"><canvas id="chartQ9"></canvas></div></div>
+      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/40 flex flex-col justify-between">
+        <h3 class="text-sm font-bold text-slate-800 mb-3">📌 แหล่งข้อมูลที่กระจัดกระจาย (ข้อ 4)</h3>
+        <div class="relative h-56 flex items-center justify-center"><canvas id="chartQ4"></canvas></div>
+      </div>
+      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/40 flex flex-col justify-between">
+        <h3 class="text-sm font-bold text-slate-800 mb-3">🔥 ผลกระทบงานสุมช่วงสอบ (ข้อ 8)</h3>
+        <div class="relative h-56 flex items-center justify-center"><canvas id="chartQ8"></canvas></div>
+      </div>
+      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/40 flex flex-col justify-between">
+        <h3 class="text-sm font-bold text-slate-800 mb-3">🚀 ความต้องการใช้ Syncal AI (ข้อ 9)</h3>
+        <div class="relative h-56 flex items-center justify-center"><canvas id="chartQ9"></canvas></div>
+      </div>
     </div>
 
-    <div class="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm">
-      <h3 class="text-base font-bold text-slate-800 mb-6">📊 Question-by-Question Breakdown</h3>
-      <div id="breakdownContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+    <!-- Breakdown -->
+    <div class="bg-white p-5 sm:p-8 rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/40">
+      <h3 class="text-base font-extrabold text-slate-800 mb-6 flex items-center gap-2">
+        <span>📊</span> สรุปสัดส่วนเปอร์เซ็นต์และจำนวนผู้ตอบรายข้อ (Question-by-Question Breakdown)
+      </h3>
+      <div id="breakdownContainer" class="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6"></div>
+    </div>
+
+    <!-- Open-ended & Logs -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/40">
+        <h3 class="text-base font-extrabold text-slate-800 mb-4">💬 ความคิดเห็นและฟีเจอร์ที่อยากได้ (ข้อ 10)</h3>
+        <div id="feedbackList" class="space-y-3 max-h-80 overflow-y-auto pr-2"></div>
+      </div>
+      <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/40">
+        <h3 class="text-base font-extrabold text-slate-800 mb-4">🕒 ประวัติการเข้าทำล่าสุด (Recent Submissions)</h3>
+        <div class="overflow-x-auto max-h-80">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-200 text-slate-400">
+                <th class="py-2.5 px-2">#</th>
+                <th class="py-2.5 px-2">เวลา</th>
+                <th class="py-2.5 px-2">ชั้นปี</th>
+                <th class="py-2.5 px-2">จำนวนระบบ</th>
+                <th class="py-2.5 px-2">สนใจใช้ AI</th>
+              </tr>
+            </thead>
+            <tbody id="recentTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- ==================== 3. DEVELOPER CREDIT & COPYRIGHT FOOTER ==================== -->
-  <footer class="w-full max-w-2xl mt-10 mb-4 space-y-4">
-    <div class="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+  <footer class="w-full max-w-2xl mt-8 mb-2 space-y-4">
+    <div class="bg-white/85 backdrop-blur-lg border border-slate-200/80 rounded-3xl p-4 sm:p-5 shadow-lg shadow-slate-200/40 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white font-extrabold text-sm shadow-md shadow-indigo-500/20">
           PP
         </div>
         <div>
-          <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">System Developed By</div>
-          <div class="text-sm font-bold text-slate-800 flex items-center gap-2">
+          <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">ผู้พัฒนาระบบโดย (System Developed By)</div>
+          <div class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
             <span>Pachara Promphan</span>
-            <button onclick="openAdminPrompt()" class="text-slate-300 hover:text-blue-600 transition" title="Admin">🔒</button>
+            <button onclick="openAdminPrompt()" class="text-slate-300 hover:text-blue-600 transition" title="Admin Dashboard">🔒</button>
           </div>
         </div>
       </div>
 
-      <div class="flex items-center gap-2.5">
+      <div class="flex flex-wrap items-center justify-center gap-2.5">
         <a href="https://www.facebook.com/pochara.promphan.1/" target="_blank" rel="noopener noreferrer" 
-           class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#1877F2]/10 hover:bg-[#1877F2] text-[#1877F2] hover:text-white font-semibold text-xs transition shadow-sm">
-          <span>Facebook</span>
+           class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#1877F2]/10 hover:bg-[#1877F2] text-[#1877F2] hover:text-white font-semibold text-xs transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          <span>Pachara Promphan</span>
         </a>
+
         <a href="https://www.instagram.com/Pxchara__/" target="_blank" rel="noopener noreferrer" 
-           class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-pink-500/10 hover:bg-pink-500 text-rose-600 hover:text-white font-semibold text-xs transition shadow-sm">
-          <span>Instagram: Pxchara__</span>
+           class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-pink-500/10 via-rose-500/10 to-amber-500/10 hover:from-pink-500 hover:via-rose-500 hover:to-amber-500 text-rose-600 hover:text-white font-semibold text-xs transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          <span>Pxchara__</span>
         </a>
       </div>
     </div>
 
     <div class="text-center space-y-1 pt-1">
-      <p class="text-xs font-semibold text-slate-550">
+      <p class="text-xs font-semibold text-slate-500">
         Copyright © 2026 <span class="text-slate-700 font-bold">Pachara Promphan</span>. All Rights Reserved.
       </p>
       <p class="text-[11px] text-slate-400">
@@ -191,6 +369,9 @@
   </footer>
 
   <script>
+    // =========================================================================
+    // ใส่ลิงก์ Web App URL (/exec) ที่ได้จากการ Deploy Google Apps Script ตรงนี้:
+    // =========================================================================
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycby4wGScHlxbxJDZ9ifwymaPwIhm-KWlYMw8E61V9kL1Km-sQYFxn_XBK-Kzz76Q0GWnCA/exec";
 
     let currentLang = 'th';
@@ -200,146 +381,178 @@
     let currentPin = '';
     let chartInstances = {};
 
-    const content = {
+    function showCustomToast(message, type = 'info') {
+      const container = document.getElementById('customToastContainer');
+      const toast = document.createElement('div');
+      const icon = type === 'success' ? '✨' : type === 'warning' ? '⚠️' : '🌐';
+      const borderCol = type === 'success' ? 'border-emerald-500/30' : type === 'warning' ? 'border-amber-500/30' : 'border-blue-500/30';
+
+      toast.className = `toast-enter pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-slate-900/90 backdrop-blur-md text-white text-xs font-semibold shadow-xl border ${borderCol}`;
+      toast.innerHTML = `<span class="text-base">${icon}</span><span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 2400);
+    }
+
+    const surveySchema = {
       th: {
         title: "แบบสอบถามการจัดการตารางเรียน & Syncal AI",
-        desc: "แบบสอบถามนี้จัดทำขึ้นเพื่อศึกษาปัญหาข้อมูลกำหนดการเรียนที่กระจัดกระจายอยู่คนละระบบ (REG, MFU Life, LMS, Syllabus) เพื่อสนับสนุนการพัฒนาโครงงาน Syncal AI",
-        langBtn: "Switch to English",
-        submit: "ส่งแบบสอบถาม (Submit)",
-        sending: "กำลังบันทึกข้อมูล...",
-        successTitle: "ขอบคุณสำหรับข้อมูล!",
-        successMsg: "บันทึกคำตอบของคุณเรียบร้อยแล้ว คุณสามารถทำแบบสอบถามซ้ำได้ตลอดเวลา",
+        desc: "ศึกษาปัญหาข้อมูลกำหนดการเรียนที่กระจัดกระจายอยู่คนละระบบ (REG, MFU Life, LMS, Syllabus) เพื่อสนับสนุนการพัฒนาโครงงาน Syncal AI (Track 1)",
+        langBtn: "English",
+        submit: "ส่งแบบสอบถาม (Submit Response)",
+        sending: "กำลังเข้ารหัสและบันทึกคำตอบของคุณ...",
+        successTitle: "บันทึกข้อมูลสำเร็จ!",
+        successMsg: "ขอบคุณที่ร่วมเป็นส่วนหนึ่งในการพัฒนาโครงงาน Syncal AI ข้อมูลของคุณถูกส่งเข้าสู่ฐานข้อมูลเรียบร้อยแล้ว",
         anotherBtn: "ทำแบบสอบถามอีกครั้ง",
-        q1: "1. ปัจจุบันคุณกำลังศึกษาอยู่ในชั้นปีใด?",
-        q1_opts: ["ปี 1", "ปี 2", "ปี 3", "ปี 4 ขึ้นไป"],
-        q2: "2. โดยเฉลี่ยในแต่ละภาคการศึกษา คุณลงทะเบียนเรียนประมาณกี่รายวิชา?",
-        q2_opts: ["น้อยกว่า 5 วิชา", "5–6 วิชา", "7–8 วิชา", "มากกว่า 8 วิชา"],
-        q3: "3. คุณต้องเปิดสลับไปมาระหว่างกี่ระบบเพื่อเช็กตารางเรียนและงาน?",
-        q3_opts: ["1–2 ระบบ", "3–4 ระบบ", "มากกว่า 4 ระบบ"],
-        q4: "4. ข้อมูลกำหนดการเรียนของคุณกระจัดกระจายอยู่ที่ใดบ้าง? (เลือกได้หลายข้อ)",
-        q4_opts: [
-          "REG MFU / MFU Life (ตารางเรียน ตารางสอบ ห้องสอบ)",
-          "MFU LMS (วันส่งการบ้าน ควิซ ลิงก์ส่งงาน)",
-          "Course Syllabus PDF (เกณฑ์คะแนน กำหนดการโครงงาน)",
-          "ไลน์กลุ่ม / โซเชียลมีเดียอาจารย์"
-        ],
-        q5: "5. คุณเคยลืมส่งงานหรือลืมห้องสอบบ่อยเพียงใด เพราะข้อมูลอยู่คนละที่?",
-        q5_opts: ["เป็นประจำทุกเทอม", "นานๆ ครั้ง แต่เคยเกิดขึ้น", "แทบไม่เคยเลย", "ไม่เคยเลย"],
-        q6: "6. คุณใช้เวลาเฉลี่ยเท่าใดต่อเทอมในการจดวันส่งงานลงปฏิทินด้วยตนเอง?",
-        q6_opts: ["น้อยกว่า 30 นาที", "30–60 นาที", "1–2 ชั่วโมง", "มากกว่า 2 ชั่วโมง", "ไม่ได้จด อาศัยจำหรือรอเพื่อนเตือน"],
-        q7: "7. ปัญหาที่น่าหงุดหงิดที่สุดในการดูข้อมูลการบ้านและ Syllabus?",
-        q7_opts: [
-          "แต่ละวิชาใช้รูปแบบตารางและฟอนต์ไม่เหมือนกันเลย",
-          "ระบุเป็น 'สัปดาห์ที่ X' แทนที่จะบอกวันที่จริง",
-          "สัดส่วนคะแนนกระจัดกระจายอยู่หลายหน้า",
-          "งานใน LMS ไม่ซิงค์เข้าปฏิทินมือถือให้อัตโนมัติ",
-          "ไฟล์เอกสารหายหรือจมอยู่ในโฟลเดอร์"
-        ],
-        q8: "8. เคยเจอปัญหางานสุมชนกันช่วงสอบ (Workload Clustering) จนเครียดสะสมหรือไม่?",
-        q8_opts: ["เคยเป็นประจำ และเครียดมาก", "เคย แต่พอถูไถเอาตัวรอดได้", "นานๆ ครั้ง", "ไม่เคยพบปัญหานี้"],
-        q9: "9. หากมี AI รวมภาพแคปหน้าจอ/PDF เข้า Google Calendar ในคลิกเดียว จะใช้หรือไม่?",
-        q9_opts: ["ใช้งานแน่นอน", "น่าจะใช้งาน", "ไม่แน่ใจ ขอดูตัวอย่างก่อน", "ไม่ใช้ ชอบจดเองมากกว่า"],
-        q10: "10. ปัญหาตารางเรียนที่ใหญ่ที่สุดของคุณคืออะไร และอยากให้ Syncal AI มีฟีเจอร์ใดมากที่สุด?",
-        placeholder: "แสดงความคิดเห็นเพิ่มเติมได้ที่นี่..."
+        q10: "10. ปัญหาตารางเรียนที่ใหญ่ที่สุดของคุณคืออะไร และอยากให้ Syncal AI มีฟีเจอร์ใดมากที่สุด? (ไม่บังคับ)",
+        placeholder: "พิมพ์ความคิดเห็นหรือฟีเจอร์ที่คุณอยากให้มี...",
+        questions: [
+          { id: 'q1', type: 'radio', cols: 2, title: "1. ปัจจุบันคุณกำลังศึกษาอยู่ในชั้นปีใด?", opts: ["ปี 1 (First Year)", "ปี 2 (Second Year)", "ปี 3 (Third Year)", "ปี 4 ขึ้นไป (Year 4+)"] },
+          { id: 'q2', type: 'radio', cols: 2, title: "2. โดยเฉลี่ยในแต่ละเทอม คุณลงทะเบียนเรียนประมาณกี่รายวิชา?", opts: ["น้อยกว่า 5 วิชา", "5–6 วิชา", "7–8 วิชา", "มากกว่า 8 วิชา"] },
+          { id: 'q3', type: 'radio', cols: 3, title: "3. ในแต่ละสัปดาห์ คุณต้องเปิดสลับไปมากี่ระบบเพื่อเช็กตารางเรียนและงาน?", opts: ["1–2 ระบบ", "3–4 ระบบ", "มากกว่า 4 ระบบ"] },
+          { id: 'q4', type: 'checkbox', cols: 1, title: "4. ข้อมูลกำหนดการเรียนของคุณกระจัดกระจายอยู่ที่ใดบ้าง? (เลือกได้หลายข้อ)", opts: ["REG MFU / MFU Life (ตารางเรียน ตารางสอบ ห้องสอบ)", "MFU LMS (วันส่งการบ้าน ควิซ ลิงก์ส่งงาน)", "Course Syllabus PDF (เกณฑ์คะแนน กำหนดการโปรเจกต์)", "LINE / แชตกลุ่มรายวิชา"] },
+          { id: 'q5', type: 'radio', cols: 2, title: "5. คุณเคยลืมส่งงานหรือลืมห้องสอบเพราะข้อมูลอยู่คนละที่บ่อยเพียงใด?", opts: ["เป็นประจำทุกเทอม", "นานๆ ครั้ง แต่เคยเกิดขึ้น", "แทบไม่เคยเลย", "ไม่เคยเลย"] },
+          { id: 'q6', type: 'radio', cols: 1, title: "6. คุณใช้เวลาเฉลี่ยเท่าใดต่อเทอมในการจดวันส่งงานลงปฏิทินด้วยตนเอง?", opts: ["น้อยกว่า 30 นาที", "30–60 นาที", "1–2 ชั่วโมง", "มากกว่า 2 ชั่วโมง", "ไม่ได้จด อาศัยจำหรือรอเพื่อนเตือน"] },
+          { id: 'q7', type: 'radio', cols: 1, title: "7. ปัญหาที่น่าหงุดหงิดที่สุดในการดูข้อมูลการบ้านและ Syllabus คืออะไร?", opts: ["แต่ละวิชาใช้รูปแบบตารางไม่เหมือนกันเลย", "ระบุเป็น 'สัปดาห์ที่ X' แทนวันที่จริง ต้องเทียบเอง", "สัดส่วนคะแนนกระจายอยู่หลายหน้า", "งานใน LMS ไม่ซิงค์เข้าปฏิทินมือถืออัตโนมัติ", "ไฟล์เอกสารหายหรือจมอยู่ในโฟลเดอร์"] },
+          { id: 'q8', type: 'radio', cols: 1, title: "8. เคยเจอปัญหางานสุมชนกันช่วงสอบ (Workload Clustering) จนเครียดสะสมหรือไม่?", opts: ["เคยเป็นประจำ และกระทบสุขภาพจิตอย่างมาก", "เคย แต่พอถูไถเอาตัวรอดได้", "นานๆ ครั้ง", "ไม่เคยพบปัญหานี้"] },
+          { id: 'q9', type: 'radio', cols: 2, title: "9. หากมี AI รวมภาพแคปหน้าจอ/PDF เข้า Google Calendar ในคลิกเดียว จะใช้หรือไม่?", opts: ["ใช้งานแน่นอน", "น่าจะใช้งาน", "ไม่แน่ใจ ขอดูตัวอย่างก่อน", "ไม่ใช้ ชอบจดเอง"] }
+        ]
       },
       en: {
         title: "Student Academic Schedule & Syncal AI Survey",
-        desc: "This survey aims to study challenges regarding fragmented schedules across multiple platforms (REG, MFU Life, LMS, Syllabus) to support the Syncal AI project (Track 1).",
-        langBtn: "สลับเป็นภาษาไทย",
+        desc: "Studying challenges regarding fragmented academic schedules across platforms (REG, MFU Life, LMS, Syllabus) to support the Syncal AI project (Track 1).",
+        langBtn: "ภาษาไทย",
         submit: "Submit Response",
-        sending: "Submitting...",
-        successTitle: "Thank You!",
-        successMsg: "Your response has been recorded successfully. You can submit another response anytime.",
+        sending: "Encrypting and saving your response...",
+        successTitle: "Submission Verified!",
+        successMsg: "Thank you for supporting the Syncal AI research project. Your response has been securely synced to our cloud database.",
         anotherBtn: "Submit another response",
-        q1: "1. In which year of study are you currently enrolled?",
-        q1_opts: ["First Year", "Second Year", "Third Year", "Fourth Year or above"],
-        q2: "2. On average, how many courses do you register for per semester?",
-        q2_opts: ["Less than 5 courses", "5–6 courses", "7–8 courses", "More than 8 courses"],
-        q3: "3. How many platforms do you check weekly (e.g. REG, MFU Life, LMS, LINE, PDF)?",
-        q3_opts: ["1–2 platforms", "3–4 platforms", "More than 4 platforms"],
-        q4: "4. Where is your schedule currently scattered? (Select all that apply)",
-        q4_opts: [
-          "REG MFU / MFU Life App (Classes, Exams & Rooms)",
-          "MFU LMS (Assignments, Quizzes & Links)",
-          "Course Syllabus PDFs (Grading weights & project deadlines)",
-          "LINE / Social Media Chat Groups"
-        ],
-        q5: "5. How often do you miss deadlines or forget exam rooms due to scattered info?",
-        q5_opts: ["Frequently / Every semester", "Occasionally", "Rarely", "Never"],
-        q6: "6. Time spent manually logging dates into your calendar per semester?",
-        q6_opts: ["<30 minutes", "30–60 minutes", "1–2 hours", ">2 hours", "Do not log manually"],
-        q7: "7. What is the most frustrating issue with course syllabi and LMS tasks?",
-        q7_opts: [
-          "Inconsistent layouts across courses",
-          "Dates written as 'Week X' instead of actual dates",
-          "Grading criteria buried across multiple pages",
-          "LMS deadlines not auto-synced to mobile calendars",
-          "Documents buried in downloads or folders"
-        ],
-        q8: "8. Have you experienced Workload Clustering causing severe stress before exams?",
-        q8_opts: ["Yes regularly and causes severe stress", "Yes but can manage", "Rarely", "Never"],
-        q9: "9. Would you use an AI that syncs screenshots/PDFs to Google Calendar in 1 click?",
-        q9_opts: ["Definitely yes", "Likely yes", "Unsure / Need demo", "No, prefer manual"],
-        q10: "10. What is your biggest scheduling problem and what feature would you like Syncal AI to have?",
-        placeholder: "Share your thoughts here..."
+        q10: "10. What is your biggest scheduling problem and what feature would you like Syncal AI to have? (Optional)",
+        placeholder: "Share your thoughts or desired features...",
+        questions: [
+          { id: 'q1', type: 'radio', cols: 2, title: "1. In which year of study are you currently enrolled?", opts: ["First Year", "Second Year", "Third Year", "Fourth Year or above"] },
+          { id: 'q2', type: 'radio', cols: 2, title: "2. On average, how many courses do you register for per semester?", opts: ["Less than 5 courses", "5–6 courses", "7–8 courses", "More than 8 courses"] },
+          { id: 'q3', type: 'radio', cols: 3, title: "3. How many platforms do you check weekly (REG, MFU Life, LMS, LINE, PDF)?", opts: ["1–2 platforms", "3–4 platforms", "More than 4 platforms"] },
+          { id: 'q4', type: 'checkbox', cols: 1, title: "4. Where is your academic schedule scattered? (Select all that apply)", opts: ["REG MFU / MFU Life App (Timetable & Exam rooms)", "MFU LMS (Assignments, Quizzes & Links)", "Course Syllabus PDFs (Grading weights & outlines)", "LINE / Course Chat Groups"] },
+          { id: 'q5', type: 'radio', cols: 2, title: "5. How often do you miss deadlines or forget exam rooms due to scattered info?", opts: ["Frequently / Every semester", "Occasionally", "Rarely", "Never"] },
+          { id: 'q6', type: 'radio', cols: 1, title: "6. Time spent manually logging dates into your personal calendar per semester?", opts: ["Less than 30 mins", "30–60 mins", "1–2 hours", "More than 2 hours", "Do not log manually / Rely on memory"] },
+          { id: 'q7', type: 'radio', cols: 1, title: "7. What is the most frustrating issue with course syllabi and LMS tasks?", opts: ["Inconsistent table layouts across courses", "Dates written as 'Week X' instead of actual dates", "Grading criteria buried across pages", "LMS deadlines not auto-synced to phone calendar", "Documents buried in downloads/folders"] },
+          { id: 'q8', type: 'radio', cols: 1, title: "8. Have you experienced Workload Clustering causing severe stress before exams?", opts: ["Yes regularly, severely impacts mental health", "Yes, but can barely manage", "Rarely", "Never"] },
+          { id: 'q9', type: 'radio', cols: 2, title: "9. Would you use an AI that syncs screenshots/PDFs to Google Calendar in 1 click?", opts: ["Definitely yes", "Likely yes", "Unsure / Want demo", "No, prefer manual"] }
+        ]
       }
     };
 
-    function renderOptions(containerId, name, opts, type = 'radio') {
-      const container = document.getElementById(containerId);
+    function showOverlay(text) {
+      document.getElementById('loadingOverlayText').innerText = text;
+      const el = document.getElementById('loadingOverlay');
+      el.classList.remove('hidden'); el.classList.add('flex');
+    }
+
+    function hideOverlay() {
+      const el = document.getElementById('loadingOverlay');
+      el.classList.add('hidden'); el.classList.remove('flex');
+    }
+
+    function openSuccessModal() {
+      const schema = surveySchema[currentLang];
+      document.getElementById('modalSuccessTitle').innerText = schema.successTitle;
+      document.getElementById('modalSuccessMsg').innerText = schema.successMsg;
+      document.getElementById('modalAnotherBtn').innerText = schema.anotherBtn;
+
+      const modal = document.getElementById('customSuccessModal');
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+
+      confetti({ particleCount: 55, angle: 60, spread: 55, origin: { x: 0, y: 0.65 } });
+      confetti({ particleCount: 55, angle: 120, spread: 55, origin: { x: 1, y: 0.65 } });
+    }
+
+    function closeSuccessModal() {
+      const modal = document.getElementById('customSuccessModal');
+      modal.classList.add('hidden'); modal.classList.remove('flex');
+      document.getElementById('surveyForm').reset();
+      updateFormProgress();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showCustomToast(currentLang === 'th' ? 'พร้อมสำหรับการทำแบบสอบถามครั้งใหม่' : 'Ready for a new response', 'success');
+    }
+
+    function renderForm() {
+      const schema = surveySchema[currentLang];
+      document.getElementById('formTitle').innerText = schema.title;
+      document.getElementById('formDesc').innerText = schema.desc;
+      document.getElementById('langLabel').innerText = schema.langBtn;
+      document.getElementById('submitLabel').innerText = schema.submit;
+      document.getElementById('q10_title').innerText = schema.q10;
+      document.getElementById('q10').placeholder = schema.placeholder;
+
+      const container = document.getElementById('questionsContainer');
       container.innerHTML = '';
-      opts.forEach((opt, idx) => {
-        const id = `${name}_${idx}`;
-        const inputClass = type === 'radio' ? 'custom-radio' : 'custom-checkbox';
+
+      schema.questions.forEach((q, qIdx) => {
+        const gridCols = q.cols === 3 ? 'grid-cols-1 sm:grid-cols-3' : q.cols === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1';
+        let optsHtml = '';
+        q.opts.forEach((optText, idx) => {
+          const inputId = `${q.id}_${idx}`;
+          const isCheckbox = q.type === 'checkbox';
+          optsHtml += `
+            <div>
+              <input type="${q.type}" name="${q.id}" id="${inputId}" value="${idx}" class="hidden option-input" ${!isCheckbox && idx === 0 ? 'required' : ''}>
+              <label for="${inputId}" class="option-card flex items-center justify-between p-4 border border-slate-200/90 bg-white rounded-2xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all duration-200 select-none">
+                <span class="text-xs sm:text-sm font-semibold text-slate-700 pr-2">${optText}</span>
+                <span class="check-circle w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center transition-all shrink-0">
+                  <svg class="check-icon w-3 h-3 text-white opacity-0 transform scale-50 transition-all duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </span>
+              </label>
+            </div>
+          `;
+        });
+
         container.innerHTML += `
-          <div>
-            <input type="${type}" name="${name}" id="${id}" value="${idx}" class="hidden ${inputClass}" ${type === 'radio' && idx === 0 ? 'required' : ''}>
-            <label for="${id}" class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-slate-50 transition select-none">
-              <span class="text-xs font-medium text-slate-700">${opt}</span>
+          <div class="q-card space-y-3" style="animation-delay: ${qIdx * 0.04}s;">
+            <label class="block text-sm sm:text-base font-bold text-slate-800">
+              ${q.title} <span class="text-rose-500">*</span>
             </label>
+            <div class="grid ${gridCols} gap-3">${optsHtml}</div>
           </div>
         `;
       });
+
+      updateFormProgress();
     }
 
-    function updateLanguage() {
-      const t = content[currentLang];
-      document.getElementById('formTitle').innerText = t.title;
-      document.getElementById('formDesc').innerText = t.desc;
-      document.getElementById('langLabel').innerText = t.langBtn;
-      document.getElementById('submitLabel').innerText = t.submit;
-      document.getElementById('q10').placeholder = t.placeholder;
-
-      for (let i = 1; i <= 10; i++) {
-        const titleEl = document.getElementById(`q${i}_title`);
-        if (titleEl) {
-          titleEl.innerHTML = `${t['q' + i]} ${i < 10 ? '<span class="text-rose-500">*</span>' : ''}`;
-        }
-        if (i < 10) {
-          renderOptions(`q${i}_options`, `q${i}`, t[`q${i}_opts`], i === 4 ? 'checkbox' : 'radio');
-        }
+    function updateFormProgress() {
+      let answered = 0;
+      for (let i = 1; i <= 9; i++) {
+        if (document.querySelectorAll(`input[name="q${i}"]:checked`).length > 0) answered++;
       }
+      const percent = Math.round((answered / 9) * 100);
+      document.getElementById('topProgressBar').style.width = `${percent}%`;
+      document.getElementById('progressText').innerText = currentLang === 'th'
+        ? `ความคืบหน้า: ${answered}/9 ข้อหลัก (${percent}%)`
+        : `Progress: ${answered}/9 completed (${percent}%)`;
     }
 
     function toggleLang() {
       currentLang = currentLang === 'th' ? 'en' : 'th';
-      updateLanguage();
+      renderForm();
+      showCustomToast(currentLang === 'th' ? 'สลับเป็นภาษาไทยแล้ว' : 'Switched to English', 'info');
     }
 
     async function handleSubmit(e) {
       e.preventDefault();
       const form = document.getElementById('surveyForm');
-      const submitBtn = document.getElementById('submitBtn');
-      const t = content[currentLang];
+      const schema = surveySchema[currentLang];
 
       const q4Checked = Array.from(document.querySelectorAll('input[name="q4"]:checked')).map(el => Number(el.value));
       if (q4Checked.length === 0) {
-        Swal.fire({
-          icon: 'warning',
-          title: currentLang === 'th' ? 'กรุณาเลือกคำตอบ' : 'Incomplete Form',
-          text: currentLang === 'th' ? 'กรุณาเลือกคำตอบในข้อ 4 อย่างน้อย 1 ข้อ' : 'Please select at least one option for Question 4',
-          confirmButtonColor: '#2563EB'
-        });
+        showCustomToast(currentLang === 'th' ? 'กรุณาเลือกคำตอบในข้อ 4 อย่างน้อย 1 ข้อ' : 'Please select at least 1 option in Question 4', 'warning');
         return;
       }
 
@@ -357,9 +570,7 @@
         q10: document.getElementById('q10').value.trim()
       };
 
-      submitBtn.disabled = true;
-      submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
-      submitBtn.innerHTML = `<span>${t.sending}</span>`;
+      showOverlay(schema.sending);
 
       try {
         const res = await fetch(GAS_API_URL, {
@@ -368,38 +579,19 @@
           body: JSON.stringify(payload)
         });
         const data = await res.json();
-        
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
-        submitBtn.innerHTML = `<span>${t.submit}</span>`;
-
+        hideOverlay();
         if (data.success) {
-          confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
-          Swal.fire({
-            icon: 'success',
-            title: t.successTitle,
-            text: t.successMsg,
-            confirmButtonText: t.anotherBtn,
-            confirmButtonColor: '#2563EB',
-            allowOutsideClick: false
-          }).then(() => {
-            form.reset();
-            updateLanguage();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          });
+          openSuccessModal();
         } else {
-          Swal.fire('Error', data.message || 'Submission failed', 'error');
+          Swal.fire('Error', data.message || 'ไม่สามารถบันทึกได้', 'error');
         }
       } catch (err) {
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
-        submitBtn.innerHTML = `<span>${t.submit}</span>`;
-        Swal.fire('Error', 'Database connection failed. Please check GAS_API_URL', 'error');
+        hideOverlay();
+        Swal.fire('Error', 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ กรุณาตรวจสอบ GAS_API_URL', 'error');
       }
     }
 
-    let secretCount = 0;
-    let secretTimer = null;
+    // ==================== SECRET ADMIN TRIGGER & AUTH ====================
     function secretTrigger() {
       secretCount++;
       clearTimeout(secretTimer);
@@ -412,21 +604,34 @@
 
     function openAdminPrompt() {
       Swal.fire({
-        title: '🔒 Admin Portal',
+        title: '🔒 ระบบผู้ดูแล (Admin Portal)',
         input: 'password',
-        inputLabel: 'Enter Admin PIN (Default: 1234)',
+        inputLabel: 'กรอกรหัสผ่านผู้ดูแล (ค่าเริ่มต้น: 1234)',
+        inputPlaceholder: 'Enter Admin PIN',
         showCancelButton: true,
-        confirmButtonText: 'View Analytics',
+        confirmButtonText: 'เข้าดูสถิติ',
+        cancelButtonText: 'ยกเลิก',
         confirmButtonColor: '#2563EB'
       }).then(result => {
         if (result.isConfirmed && result.value) {
-          fetchAndShowAdmin(result.value);
+          currentPin = result.value;
+          fetchAndShowAdmin(currentPin);
         }
       });
     }
 
+    function refreshAdminData() {
+      if (currentPin) fetchAndShowAdmin(currentPin);
+    }
+
+    function closeAdmin() {
+      document.getElementById('adminView').classList.add('hidden');
+      document.getElementById('surveyView').classList.remove('hidden');
+      showCustomToast('กลับสู่หน้าแบบสอบถาม', 'success');
+    }
+
     async function fetchAndShowAdmin(pin) {
-      Swal.fire({ title: 'Loading Analytics...', didOpen: () => Swal.showLoading() });
+      showOverlay('กำลังดึงข้อมูลและคำนวณเปอร์เซ็นต์...');
       try {
         const res = await fetch(GAS_API_URL, {
           method: 'POST',
@@ -434,43 +639,168 @@
           body: JSON.stringify({ action: 'admin', pin: pin })
         });
         const data = await res.json();
-        Swal.close();
+        hideOverlay();
         if (!data.success) {
-          Swal.fire('Access Denied', data.message, 'error');
+          Swal.fire('รหัสผ่านไม่ถูกต้อง', data.message, 'error');
           return;
         }
+        cachedAdminRows = data.rows || [];
         document.getElementById('sheetLinkBtn').href = data.sheetUrl || '#';
         document.getElementById('surveyView').classList.add('hidden');
         document.getElementById('adminView').classList.remove('hidden');
-        renderDashboard(data.rows || []);
+        renderDashboard(cachedAdminRows);
+        showCustomToast(`ซิงค์ข้อมูล ${cachedAdminRows.length} รายการสำเร็จ`, 'success');
       } catch (err) {
-        Swal.close();
+        hideOverlay();
         Swal.fire('Error', err.toString(), 'error');
       }
     }
 
-    function closeAdmin() {
-      document.getElementById('adminView').classList.add('hidden');
-      document.getElementById('surveyView').classList.remove('hidden');
+    function animateNumber(id, targetVal, suffix = '') {
+      const el = document.getElementById(id);
+      let current = 0;
+      const step = Math.max(1, Math.ceil(targetVal / 25));
+      const interval = setInterval(() => {
+        current += step;
+        if (current >= targetVal) { current = targetVal; clearInterval(interval); }
+        el.innerText = `${current}${suffix}`;
+      }, 25);
+    }
+
+    function pct(part, total) {
+      return total ? Math.round((part / total) * 100) : 0;
     }
 
     function renderDashboard(rows) {
       const total = rows.length;
-      document.getElementById('kpiTotal').innerText = total;
-      document.getElementById('kpiMissed').innerText = `${Math.round((rows.filter(r => r.q5 === 0 || r.q5 === 1).length / (total || 1)) * 100)}%`;
-      document.getElementById('kpiStress').innerText = `${Math.round((rows.filter(r => r.q8 === 0 || r.q8 === 1).length / (total || 1)) * 100)}%`;
-      document.getElementById('kpiAdopt').innerText = `${Math.round((rows.filter(r => r.q9 === 0 || r.q9 === 1).length / (total || 1)) * 100)}%`;
+      animateNumber('kpiTotal', total);
+
+      const missedCount = rows.filter(r => r.q5 === 0 || r.q5 === 1).length;
+      animateNumber('kpiMissed', pct(missedCount, total), '%');
+      document.getElementById('kpiMissedSub').innerText = `${missedCount} จาก ${total} คน เคยลืมส่งงาน/ห้องสอบ`;
+
+      const stressCount = rows.filter(r => r.q8 === 0 || r.q8 === 1).length;
+      animateNumber('kpiStress', pct(stressCount, total), '%');
+      document.getElementById('kpiStressSub').innerText = `${stressCount} จาก ${total} คน เจองานสุมช่วงสอบ`;
+
+      const adoptCount = rows.filter(r => r.q9 === 0 || r.q9 === 1).length;
+      animateNumber('kpiAdopt', pct(adoptCount, total), '%');
+      document.getElementById('kpiAdoptSub').innerText = `${adoptCount} จาก ${total} คน พร้อมใช้งานทันที`;
+
+      const thQuestions = surveySchema.th.questions;
+      const breakdownEl = document.getElementById('breakdownContainer');
+      breakdownEl.innerHTML = '';
+      const countsStore = {};
+
+      thQuestions.forEach(q => {
+        const counts = new Array(q.opts.length).fill(0);
+        rows.forEach(r => {
+          if (q.id === 'q4' && Array.isArray(r.q4)) {
+            r.q4.forEach(val => { if (counts[val] !== undefined) counts[val]++; });
+          } else {
+            const val = r[q.id];
+            if (counts[val] !== undefined) counts[val]++;
+          }
+        });
+        countsStore[q.id] = counts;
+
+        let barsHtml = '';
+        q.opts.forEach((optLabel, i) => {
+          const c = counts[i];
+          const p = pct(c, total);
+          barsHtml += `
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-700 font-semibold">${optLabel}</span>
+                <span class="text-indigo-600 font-extrabold">${c} คน (${p}%)</span>
+              </div>
+              <div class="w-full bg-slate-200/70 h-2.5 rounded-full overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full bar-fill" style="width: ${p}%"></div>
+              </div>
+            </div>
+          `;
+        });
+
+        breakdownEl.innerHTML += `
+          <div class="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-3.5">
+            <div class="text-xs sm:text-sm font-extrabold text-slate-800">${q.title}</div>
+            <div class="space-y-3">${barsHtml}</div>
+          </div>
+        `;
+      });
+
+      drawChart('chartQ4', 'bar', ['REG/MFU Life', 'MFU LMS', 'Syllabus PDF', 'LINE Group'], countsStore['q4'], ['#2563EB', '#4F46E5', '#7C3AED', '#DB2777']);
+      drawChart('chartQ8', 'doughnut', ['เครียดมาก', 'พอจัดการได้', 'นานๆ ครั้ง', 'ไม่เคย'], countsStore['q8'], ['#E11D48', '#F59E0B', '#10B981', '#94A3B8']);
+      drawChart('chartQ9', 'doughnut', ['ใช้แน่นอน', 'น่าจะใช้', 'ขอดูก่อน', 'ไม่ใช้'], countsStore['q9'], ['#2563EB', '#60A5FA', '#FBBF24', '#CBD5E1']);
+
+      const fbEl = document.getElementById('feedbackList');
+      const feedbacks = rows.filter(r => r.q10 && r.q10.length > 0).reverse();
+      fbEl.innerHTML = feedbacks.length === 0
+        ? `<div class="text-xs text-slate-400 py-8 text-center">ยังไม่มีความคิดเห็นปลายเปิด</div>`
+        : feedbacks.map(f => `<div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 text-xs text-slate-700 font-medium">"${f.q10}"</div>`).join('');
+
+      const tbody = document.getElementById('recentTableBody');
+      if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">ยังไม่มีผู้ตอบแบบสอบถาม</td></tr>`;
+      } else {
+        const recent = [...rows].reverse().slice(0, 15);
+        tbody.innerHTML = recent.map((r, idx) => {
+          const d = new Date(r.timestamp);
+          const timeStr = isNaN(d) ? '-' : d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+          return `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="py-2.5 px-2 font-bold text-slate-400">#${total - idx}</td>
+              <td class="py-2.5 px-2 font-medium">${timeStr}</td>
+              <td class="py-2.5 px-2">${surveySchema.th.questions[0].opts[r.q1] || '-'}</td>
+              <td class="py-2.5 px-2">${surveySchema.th.questions[2].opts[r.q3] || '-'}</td>
+              <td class="py-2.5 px-2"><span class="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-full font-bold">${surveySchema.th.questions[8].opts[r.q9] || '-'}</span></td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    function drawChart(canvasId, type, labels, dataArr, colors) {
+      if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      chartInstances[canvasId] = new Chart(ctx, {
+        type: type,
+        data: { labels: labels, datasets: [{ data: dataArr, backgroundColor: colors, borderWidth: 0, borderRadius: type === 'bar' ? 8 : 0 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: type === 'doughnut', position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
+          scales: type === 'bar' ? { y: { beginAtZero: true, ticks: { precision: 0 } } } : {}
+        }
+      });
     }
 
     function exportCSV() {
-      Swal.fire('Info', 'You can click "Open Google Sheet" above to export or download CSV directly.', 'info');
+      if (!cachedAdminRows.length) {
+        showCustomToast('ยังไม่มีข้อมูลสำหรับส่งออก', 'warning');
+        return;
+      }
+      const headers = ['Timestamp', 'Year', 'Courses', 'Platforms', 'Sources', 'Missed_Deadlines', 'Manual_Time', 'Frustration', 'Workload_Stress', 'AI_Adoption', 'Feedback'];
+      const qTh = surveySchema.th.questions;
+      const csvRows = [headers.join(',')];
+
+      cachedAdminRows.forEach(r => {
+        csvRows.push([
+          `"${r.timestamp}"`, `"${qTh[0].opts[r.q1] || ''}"`, `"${qTh[1].opts[r.q2] || ''}"`,
+          `"${qTh[2].opts[r.q3] || ''}"`, `"${(r.q4 || []).map(i => qTh[3].opts[i]).join('; ')}"`,
+          `"${qTh[4].opts[r.q5] || ''}"`, `"${qTh[5].opts[r.q6] || ''}"`, `"${qTh[6].opts[r.q7] || ''}"`,
+          `"${qTh[7].opts[r.q8] || ''}"`, `"${qTh[8].opts[r.q9] || ''}"`, `"${(r.q10 || '').replace(/"/g, '""')}"`
+        ].join(','));
+      });
+
+      const blob = new Blob(["\uFEFF" + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Syncal_AI_Survey_Results.csv';
+      a.click();
+      showCustomToast('ดาวน์โหลดไฟล์ CSV เรียบร้อยแล้ว', 'success');
     }
 
-    function refreshAdminData() {
-      openAdminPrompt();
-    }
-
-    updateLanguage();
+    renderForm();
   </script>
 </body>
 </html>
